@@ -1,0 +1,19 @@
+{
+  "name": "nodejs-MySQL-push-notifications-demo",
+  "version": "0.1.2",
+  "description": "nodejs-MySQL-push-notifications-demo",
+  "main": "newsvr.js",
+  "dependencies": {
+    "express": "^4.10.2",
+    "mysql": "*",
+    "socket.io": "*"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "MA",
+  "license": "BSD-2-Clause",
+  "homepage": "push-notifications-demo"
+}

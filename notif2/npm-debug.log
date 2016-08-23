@@ -1,0 +1,57 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'C:\\Program Files\\nodejs\\\\node.exe',
+1 verbose cli   'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'outdated' ]
+2 info using npm@1.4.21
+3 info using node@v0.10.30
+4 verbose node symlink C:\Program Files\nodejs\\node.exe
+5 verbose request where is /mysql
+6 verbose request registry https://registry.npmjs.org/
+7 verbose request id 55e8817a8d9c2ee0
+8 verbose url raw /mysql
+9 verbose url resolving [ 'https://registry.npmjs.org/', './mysql' ]
+10 verbose url resolved https://registry.npmjs.org/mysql
+11 verbose request where is https://registry.npmjs.org/mysql
+12 info trying registry request attempt 1 at 15:27:38
+13 http GET https://registry.npmjs.org/mysql
+14 verbose request where is /socket.io
+15 verbose request registry https://registry.npmjs.org/
+16 verbose url raw /socket.io
+17 verbose url resolving [ 'https://registry.npmjs.org/', './socket.io' ]
+18 verbose url resolved https://registry.npmjs.org/socket.io
+19 verbose request where is https://registry.npmjs.org/socket.io
+20 info trying registry request attempt 1 at 15:27:39
+21 http GET https://registry.npmjs.org/socket.io
+22 info retry will retry, error on last attempt: Error: tunneling socket could not be established, cause=Parse Error
+23 info retry will retry, error on last attempt: Error: tunneling socket could not be established, cause=Parse Error
+24 info trying registry request attempt 2 at 15:27:54
+25 http GET https://registry.npmjs.org/mysql
+26 info trying registry request attempt 2 at 15:27:54
+27 http GET https://registry.npmjs.org/socket.io
+28 info retry will retry, error on last attempt: Error: tunneling socket could not be established, cause=Parse Error
+29 info retry will retry, error on last attempt: Error: tunneling socket could not be established, cause=Parse Error
+30 info trying registry request attempt 3 at 15:28:54
+31 http GET https://registry.npmjs.org/mysql
+32 info trying registry request attempt 3 at 15:28:54
+33 http GET https://registry.npmjs.org/socket.io
+34 error TypeError: Cannot read property 'length' of undefined
+34 error     at C:\Program Files\nodejs\node_modules\npm\lib\outdated.js:42:29
+34 error     at cb (C:\Program Files\nodejs\node_modules\npm\node_modules\slide\lib\async-map.js:48:11)
+34 error     at C:\Program Files\nodejs\node_modules\npm\lib\outdated.js:273:20
+34 error     at RegClient.<anonymous> (C:\Program Files\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\get.js:162:20)
+34 error     at cb (C:\Program Files\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:57:9)
+34 error     at RegClient.<anonymous> (C:\Program Files\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:148:10)
+34 error     at cb (C:\Program Files\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:158:9)
+34 error     at RegClient.<anonymous> (C:\Program Files\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:251:20)
+34 error     at Request._callback (C:\Program Files\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:230:20)
+34 error     at self.callback (C:\Program Files\nodejs\node_modules\npm\node_modules\request\request.js:123:22)
+35 error If you need help, you may report this *entire* log,
+35 error including the npm and node versions, at:
+35 error     <http://github.com/npm/npm/issues>
+36 error System Windows_NT 6.1.7601
+37 error command "C:\\Program Files\\nodejs\\\\node.exe" "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "outdated"
+38 error cwd C:\work\node\notif2
+39 error node -v v0.10.30
+40 error npm -v 1.4.21
+41 error type non_object_property_load
+42 verbose exit [ 1, true ]
