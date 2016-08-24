@@ -10,6 +10,13 @@ var connectionsArray = [];
 //my sql setup
 
 
+
+
+
+
+
+
+
 var connection = mysql.createConnection({
 		host : 'localhost',
 		user : 'root',
@@ -29,6 +36,60 @@ http.listen(3000, function () {
 
 });
 
+
+
+
+
+  require('socketio-auth')  (io, {
+  authenticate: authenticate, 
+  postAuthenticate: postAuthenticate,
+  timeout: 1000
+});
+
+
+
+
+
+
+function authenticate(socket, data, callback) {
+  var username = data.username;
+  var password = data.password;
+  
+  db.findUser('User', {username:username}, function(err, user) {
+    if (err || !user) return callback(new Error("User not found"));
+    return callback(null, user.password == password);
+  });
+}
+
+
+
+
+
+
+function findUser(xusr) {
+
+return true
+}
+
+
+
+function postAuthenticate(socket, data) {
+  var username = data.username;
+  console.log('post auth*******************************');
+  db.findUser('User', {username:username}, function(err, user) {
+    socket.client.user = user;
+	console.log('post auth2*******************************');
+	console.log(' socket.client.user:' +  socket.client.user);
+  });
+}
+
+
+
+
+
+
+
+
 // If there is an error connecting to the database
 connection.connect(function (err) {
 	if (err) {
@@ -41,6 +102,12 @@ connection.connect(function (err) {
 	//pollingLoop();
 });
 
+
+
+
+
+
+
 io.on('connection', function (socket) {
 	console.log('socket connection detected');
 	connectionsArray.push(socket.id);
@@ -49,11 +116,10 @@ io.on('connection', function (socket) {
 	var address = socket.handshake.address;
 	console.log('connectionsArray.length:' + connectionsArray.length);
 	console.log('connected socket.id:' + socket.id);
-	console.log("address.address : address.port: " + address.address + ":" + address.port);
 	console.log('socket.handshake.query.secuid = ' + socket.handshake.query.name );
 	
-	console.log(socket.handshake);
-	console.log('req=' + socket.request.query);
+	//console.log(socket.handshake);
+	//console.log('req=' + socket.request.query);
 	
 	
 	
@@ -67,8 +133,8 @@ io.on('connection', function (socket) {
 		console.log(' systedem disconnect  - socket.id:' + socket.id);
 		var socketIndex = connectionsArray.indexOf(socket.id);
 		console.log('socket  index= ' + socketIndex + ' disconnected');
-		console.log('socket.handshake.address = ' + socket.handshake.address + ' disconnected');
-		console.log('socket.handshake.secuid = ' + socket.handshake.query.secuid + ' disconnected');
+		//console.log('socket.handshake.address = ' + socket.handshake.address + ' disconnected');
+		//console.log('socket.handshake.secuid = ' + socket.handshake.query.secuid + ' disconnected');
 
 		sqlDisconnect(socket);
 
@@ -102,12 +168,12 @@ io.on('connection', function (socket) {
 
 var pollingLoop = function () {
 
-	console.log('in Function poll looping...');
+	console.log('\n\nin Function poll looping...');
 
 	var query = connection.query("SELECT c.commandqid,c.commandqs,c.status,c.mac, a.authkey as authkey FROM commandq c , authkeylog a where c.status='pending' and a.mac=c.mac and firstscheduletime<=now();"),
 	cmdq = []; // this array will contain the result of our db query
 
-	console.log("SELECT c.commandqid,c.commandqs,c.status,c.mac, a.authkey as authkey FROM commandq c , authkeylog a where c.status='pending' and a.mac=c.mac and firstscheduletime<=now();");
+	console.log("\nSELECT c.commandqid,c.commandqs,c.status,c.mac, a.authkey as authkey FROM commandq c , authkeylog a where c.status='pending' and a.mac=c.mac and firstscheduletime<=now();");
 
 	// setting the query listeners
 	query
