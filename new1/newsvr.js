@@ -11,7 +11,7 @@ var connectionsArray = [];
 
 
 
-
+require('dotenv').config();
 
 
 
@@ -21,7 +21,7 @@ var connection = mysql.createConnection({
 		host : process.env.DB_HOST,
 		user : 'root',
 		password : '',
-		database : 'templatecontent',
+		database : process.env.DB_NM,
 		port : 3306
 	});
 
