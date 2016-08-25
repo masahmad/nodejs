@@ -18,7 +18,7 @@ var connectionsArray = [];
 
 
 var connection = mysql.createConnection({
-		host : 'localhost',
+		host : process.env.DB_HOST,
 		user : 'root',
 		password : '',
 		database : 'templatecontent',
@@ -40,6 +40,8 @@ http.listen(3000, function () {
 
 
 
+/*
+
   require('socketio-auth')  (io, {
   authenticate: authenticate, 
   postAuthenticate: postAuthenticate,
@@ -55,7 +57,7 @@ function authenticate(socket, data, callback) {
   var username = data.username;
   var password = data.password;
   
-  db.findUser('User', {username:username}, function(err, user) {
+  findUser('User', {username:username}, function(err, user) {
     if (err || !user) return callback(new Error("User not found"));
     return callback(null, user.password == password);
   });
@@ -73,17 +75,20 @@ return true
 
 
 
+
+
+
+
 function postAuthenticate(socket, data) {
   var username = data.username;
   console.log('post auth*******************************');
-  db.findUser('User', {username:username}, function(err, user) {
+  findUser('User', {username:username}, function(err, user) {
     socket.client.user = user;
 	console.log('post auth2*******************************');
 	console.log(' socket.client.user:' +  socket.client.user);
   });
 }
-
-
+*/
 
 
 
@@ -116,12 +121,6 @@ io.on('connection', function (socket) {
 	var address = socket.handshake.address;
 	console.log('connectionsArray.length:' + connectionsArray.length);
 	console.log('connected socket.id:' + socket.id);
-	console.log('socket.handshake.query.secuid = ' + socket.handshake.query.name );
-	
-	//console.log(socket.handshake);
-	//console.log('req=' + socket.request.query);
-	
-	
 	
 
 	//connectionsArray.push(socket);
@@ -150,6 +149,14 @@ io.on('connection', function (socket) {
 		console.log('start loop again');
 		pollingLoop();
 	}
+	
+	
+	
+  socket.on('unauthorized', function(err){
+  console.log("There was an error with the authentication:", err.message); 
+});
+
+	
 
 });
 
@@ -157,7 +164,11 @@ io.on('connection', function (socket) {
 
 
 
-
+io.use(function(socket, next) {
+  var handshakeData = socket.request;
+  console.log("XXXmiddleware:", handshakeData._query['secuid']);
+  next();
+});
 
 
 
@@ -281,13 +292,21 @@ var updateSockets = function (data) {
 
 var SavetoMySQL = function (logdata) {
 	//logdata is the socket
-	var addressx = logdata.handshake.address;
-	var secuid = logdata.handshake.secuid;
+	
+	
+	
+	  var handshakeData = logdata.request;
+    var secuid  =  handshakeData._query['secuid'];
+	
+	
+	//var addressx = logdata.handshake.address;
+	//var secuid = logdata.handshake.secuid;
+	
+		
 	console.log('in Function SavetoMySQL...');
-	//var d = new Date();
-
+	
 	//var sql= "UPDATE authkeylog SET connected=1, ip='" + addressx.address +"',authkey='" + logdata.id+"',logdate=now() where mac='" + logdata.handshake.query.secuid+"'";
-	var sql = "UPDATE authkeylog SET connected=1, ip='" + addressx.address + "',authkey='" + logdata.id + "',logdate=now() where mac='test1'";
+	var sql = "UPDATE authkeylog SET connected=1, authkey='" + logdata.id + "',logdate=now() where mac='" + secuid +"'";
 	console.log(sql);
 	connection.query(sql);
 

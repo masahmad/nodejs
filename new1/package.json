@@ -4,6 +4,7 @@
   "description": "nodejs-MySQL-push-notifications-demo",
   "main": "newsvr.js",
   "dependencies": {
+    "dotenv": "^2.0.0",
     "express": "^4.10.2",
     "mysql": "*",
     "socket.io": "*"
