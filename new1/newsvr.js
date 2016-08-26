@@ -3,6 +3,12 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var mysql = require('mysql');
 
+
+var fs = require('fs');
+var util = require('util');
+
+
+
 var POLLING_INTERVAL = 9000;
 var pollingTimer;
 var connectionsArray = [];
@@ -10,16 +16,24 @@ var connectionsArray = [];
 //my sql setup
 
 
+//log file
+var log_file = fs.createWriteStream(__dirname + '/debug.log', {flags : 'w'});
+var log_stdout = process.stdout;
 
+
+//config
 require('dotenv').config();
 
 
-
+console.log = function(d) { //
+  log_file.write(util.format(d) + '\n');
+  log_stdout.write(util.format(d) + '\n');
+};
 
 
 var connection = mysql.createConnection({
 		host : process.env.DB_HOST,
-		user : 'root',
+		user : process.env.DB_USER,
 		password : '',
 		database : process.env.DB_NM,
 		port : 3306
@@ -75,10 +89,6 @@ return true
 
 
 
-
-
-
-
 function postAuthenticate(socket, data) {
   var username = data.username;
   console.log('post auth*******************************');
@@ -115,7 +125,12 @@ connection.connect(function (err) {
 
 io.on('connection', function (socket) {
 	console.log('socket connection detected');
+	
+
+	
+	var obj = {"socketid": socket.id, "secuid":   "testxx"}
 	connectionsArray.push(socket.id);
+	//connectionsArray.push(obj);
 	
 	
 	var address = socket.handshake.address;
@@ -123,19 +138,23 @@ io.on('connection', function (socket) {
 	console.log('connected socket.id:' + socket.id);
 	
 
-	//connectionsArray.push(socket);
 	//UPDATE authkeylog SET connected=1
-	SavetoMySQL(socket);
+	UpdateAuthKeyLogTbl(socket,1);
 
 	// *** disconnect socket ***
 	socket.on('disconnect', function () {
-		console.log(' systedem disconnect  - socket.id:' + socket.id);
+	
+	var handshakeData = socket.request;
+    //var secuid_disconnect =  handshakeData._query['secuid']);
+	
+		console.log(' system disconnect  - socket.id:' + socket.id);
 		var socketIndex = connectionsArray.indexOf(socket.id);
-		console.log('socket  index= ' + socketIndex + ' disconnected');
+		//console.log('secuid' +  secuid_disconnect  +  ' disconnected');
 		//console.log('socket.handshake.address = ' + socket.handshake.address + ' disconnected');
 		//console.log('socket.handshake.secuid = ' + socket.handshake.query.secuid + ' disconnected');
 
-		sqlDisconnect(socket);
+		UpdateAuthKeyLogTbl (socket,0); // disconnect
+		
 
 		if (socketIndex >= 0) {
 			console.log(' socketindex=' + socketIndex);
@@ -143,6 +162,10 @@ io.on('connection', function (socket) {
 		}
 
 	});
+	
+	
+	
+	
 
 	// starting the loop only if at least there is one user connected
 	if (connectionsArray.length > 0) {
@@ -152,6 +175,11 @@ io.on('connection', function (socket) {
 	
 	
 	
+	
+	
+	
+	
+	// unused
   socket.on('unauthorized', function(err){
   console.log("There was an error with the authentication:", err.message); 
 });
@@ -166,7 +194,7 @@ io.on('connection', function (socket) {
 
 io.use(function(socket, next) {
   var handshakeData = socket.request;
-  console.log("XXXmiddleware:", handshakeData._query['secuid']);
+  console.log("XXmiddleware:", handshakeData._query['secuId']);
   next();
 });
 
@@ -175,16 +203,14 @@ io.use(function(socket, next) {
 
 
 
-
-
 var pollingLoop = function () {
 
-	console.log('\n\nin Function poll looping...');
+	console.log('\n\n in  poll looping...');
 
 	var query = connection.query("SELECT c.commandqid,c.commandqs,c.status,c.mac, a.authkey as authkey FROM commandq c , authkeylog a where c.status='pending' and a.mac=c.mac and firstscheduletime<=now();"),
 	cmdq = []; // this array will contain the result of our db query
 
-	console.log("\nSELECT c.commandqid,c.commandqs,c.status,c.mac, a.authkey as authkey FROM commandq c , authkeylog a where c.status='pending' and a.mac=c.mac and firstscheduletime<=now();");
+	//console.log("\nSELECT c.commandqid,c.commandqs,c.status,c.mac, a.authkey as authkey FROM commandq c , authkeylog a where c.status='pending' and a.mac=c.mac and firstscheduletime<=now();");
 
 	// setting the query listeners
 	query
@@ -201,6 +227,9 @@ var pollingLoop = function () {
 
 		// loop on itself only if there are sockets still connected
 
+		
+		
+		
 		console.log('\n\n\n');
 		console.log('---------------------------------------');
 		console.log('.      Total socket connections  ' + connectionsArray.length + '    .');
@@ -219,52 +248,42 @@ var pollingLoop = function () {
 
 			// Doing the database query
 			pollingTimer = setTimeout(pollingLoop, POLLING_INTERVAL);
-			updateSockets({
-				cmdq : cmdq
-			});
+			 if (cmdq.length >0) assignCmdQToSockets({	cmdq : cmdq});
+		}
+		
+		else
+		 {
+		console.log('pause');
 		}
 
 	});
 
 };
 
-// this is called after reading db in  the loop
-var updateSockets = function (data) {
 
-	console.log('\n   in Function UpdateSockets...');
+// this is called after reading db in  the polingloop
+// if htere is a pending cmd in the queue then try to assign to socket below
+var assignCmdQToSockets = function (data) {
 
-	// adding the time of the last update
-	//data.time = new Date();
+	//console.log('\n   in Function UpdateSockets...');
+   console.log('\n\n\n Pending Commands in Current MySQL Queue: ' + data.cmdq.length);
+   console.log('*******************************************');
 	// sending new data to all the sockets connected
 	data.cmdq.forEach(function (tmpSocket) {
-		// tmpSocket.volatile.emit('notification', data);
-		//
-		// tmpSocket.emit('notification', data);
-
-		console.log('\n');
-
-		console.log('commandqs: ' + tmpSocket.commandqs);
+	
 		console.log('status:' + tmpSocket.status);
-		console.log('mac:' + tmpSocket.mac);
-		console.log('tmpSocket.authkey from db: ' + tmpSocket.authkey);
-		console.log('length of cmdq objects:' + data.cmdq.length);
-		//console.log("\r Object.keys(io.sockets.connected 1:" + Object.keys(io.sockets.connected));
-		//console.log('\r  io.sockets.connected 2:'     + io.sockets.connected);
-		console.log('\n\n  check if  socket id in cmdq  is currently connected :' + io.sockets.connected[tmpSocket.authkey]);
-
-		//console.log("\r" + io.sockets.connected[');
-		//Object.keys(o)
-
-		//io.sockets.socket(tmpSocket.authkey).emit('notification', tmpSocket, function (data)
-		//io.socket[tmpSocket.authkey].emit('notification', tmpSocket, function (data)
-
+		console.log('secuid:' + tmpSocket.mac);
+		console.log('commandqs: ' + tmpSocket.commandqs);
+		console.log('tmpSocket.authkey: ' + tmpSocket.authkey   +' (' + io.sockets.connected[tmpSocket.authkey] +')');
+		console.log('*******************************************');
+	
 
 		if (io.sockets.connected[tmpSocket.authkey] != null) {
 
 			io.sockets.connected[tmpSocket.authkey].emit("notification", tmpSocket, function (data) {
 				// http://stackoverflow.com/questions/10546956/is-there-a-driver-for-mysql-on-nodejs-that-supports-stored-procedures
 				var myParams = data;
-				console.log('xxxxxxxxxxxxxxxxxxparam data:' + data);
+				console.log('xxparam data:' + data);
 				connection.query("CALL spUpdateCmdQStatus(" + myParams + ")", function (err, results, fields) {
 					//if (err || results[0].res === 0) {
 					if (err) {
@@ -290,33 +309,23 @@ var updateSockets = function (data) {
 
 
 
-var SavetoMySQL = function (logdata) {
+var UpdateAuthKeyLogTbl = function (logdata ,conflag) {
 	//logdata is the socket
-	
-	
 	
 	  var handshakeData = logdata.request;
     var secuid  =  handshakeData._query['secuid'];
-	
-	
-	//var addressx = logdata.handshake.address;
-	//var secuid = logdata.handshake.secuid;
-	
-		
 	console.log('in Function SavetoMySQL...');
-	
 	//var sql= "UPDATE authkeylog SET connected=1, ip='" + addressx.address +"',authkey='" + logdata.id+"',logdate=now() where mac='" + logdata.handshake.query.secuid+"'";
-	var sql = "UPDATE authkeylog SET connected=1, authkey='" + logdata.id + "',logdate=now() where mac='" + secuid +"'";
+	var sql = "UPDATE authkeylog SET connected=" + conflag +" , authkey='" + logdata.id + "',logdate=now() where mac='" + secuid +"'";
 	console.log(sql);
 	connection.query(sql);
-
 };
 
 
 
 
 
-
+/*
 var sqlDisconnect = function (logdata) {
 	//logdata is the socket
 	var addressx = logdata.handshake.address;
@@ -330,3 +339,7 @@ var sqlDisconnect = function (logdata) {
 	connection.query(sql);
 
 };
+*/
+
+
+
