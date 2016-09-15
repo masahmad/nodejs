@@ -1,3 +1,38 @@
+
+//http://docs.keymetrics.io/docs/usage/install-pmx/
+
+
+
+var pmx = require('pmx').init({
+  http          : true, // HTTP routes logging (default: false) 
+  http_latency  : 200,  // Limit of acceptable latency 
+  http_code     : 500,  // Error code to track' 
+  alert_enabled : true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled) 
+  ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: []) 
+  errors        : true, // Exceptions loggin (default: true) 
+  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true) 
+  network       : true, // Network monitoring at the application level (default: false) 
+  ports         : true  // Shows which ports your app is listening on (default: false) 
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
@@ -31,10 +66,42 @@ console.log = function(d) { //
 };
 
 
+
+
+
+
+
+var probe = pmx.probe();
+
+// Here the value function will be called each second to get the value
+var metric = probe.metric({
+  name:'connectionsArray',
+  value: function() {
+    return connectionsArray.length;
+  }
+});
+
+
+// Here we are going to call valvar.set() to set the new value
+var valvar = probe.metric({
+  name: 'connectionsArray'
+});
+
+
+
+
+
+
+
+
+
+
+
+
 var connection = mysql.createConnection({
-		host : process.env.DB_HOST,
+		host : "192.168.0.14",
 		user : process.env.DB_USER,
-		password : '',
+		password : 'violator',
 		database : process.env.DB_NM,
 		port : 3306
 	});
